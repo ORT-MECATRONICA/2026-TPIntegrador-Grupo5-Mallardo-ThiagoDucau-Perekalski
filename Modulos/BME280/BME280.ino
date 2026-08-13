@@ -18,4 +18,5 @@ void setup() {
 void loop() {
   Serial.print("Temp:"); Serial.println(bme.readTemperature());
   Serial.print("Humidity:"); Serial.println(bme.readHumidity());
+  delay(5000);
 }
