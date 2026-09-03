@@ -17,7 +17,7 @@ void loop() {
   Serial.print("Valor MQ-2: ");
   Serial.println(sensorValue);
   
-  if (sensorValue > 250) {
+  if (sensorValue > 3500) {
     digitalWrite(ledPin, HIGH); // Prende el LED
     Serial.println("¡Alerta! Nivel superado.");
   } else {
