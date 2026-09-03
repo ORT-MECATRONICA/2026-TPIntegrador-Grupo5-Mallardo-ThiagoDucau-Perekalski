@@ -1,75 +1,55 @@
 // Grupo 5: Marco Mallardo, Thiago Ducau, Ramiro Perekalski
 
 #include <Arduino.h>
+#include <ld2410.h>
 
 #define MONITOR_SERIAL Serial
 #define RADAR_SERIAL Serial1
 #define RADAR_RX_PIN 16
 #define RADAR_TX_PIN 17
  
-#include <ld2410.h>
- 
 ld2410 radar;
+uint32_t ultimaLectura = 0;
  
-uint32_t lastReading = 0;
- 
-void setup(void)
-{
-  MONITOR_SERIAL.begin(115200); // Feedback over Serial Monitor
-  // radar.debug(MONITOR_SERIAL); Uncomment to show debug information from the library on the Serial Monitor. By default this does not show sensor reads as they are very frequent.
- 
-  RADAR_SERIAL.begin(256000, SERIAL_8N1, RADAR_RX_PIN, RADAR_TX_PIN); // UART for monitoring the radar
+void setup() {
+  MONITOR_SERIAL.begin(115200);
+  RADAR_SERIAL.begin(256000, SERIAL_8N1, RADAR_RX_PIN, RADAR_TX_PIN);
+  
   delay(500);
-  MONITOR_SERIAL.print(F("\nConnect LD2410 radar TX to GPIO:"));
-  MONITOR_SERIAL.println(RADAR_RX_PIN);
-  MONITOR_SERIAL.print(F("Connect LD2410 radar RX to GPIO:"));
-  MONITOR_SERIAL.println(RADAR_TX_PIN);
-  MONITOR_SERIAL.print(F("LD2410 radar sensor initialising: "));
+  MONITOR_SERIAL.print(F("Iniciando sensor radar LD2410... "));
  
-  if (radar.begin(RADAR_SERIAL))
-  {
+  if (radar.begin(RADAR_SERIAL)) {
     MONITOR_SERIAL.println(F("OK"));
-    MONITOR_SERIAL.print(F("LD2410 firmware version: "));
-    MONITOR_SERIAL.print(radar.firmware_major_version);
-    MONITOR_SERIAL.print('.');
-    MONITOR_SERIAL.print(radar.firmware_minor_version);
-    MONITOR_SERIAL.print('.');
-    MONITOR_SERIAL.println(radar.firmware_bugfix_version, HEX);
-  }
-  else
-  {
-    MONITOR_SERIAL.println(F("not connected"));
+  } else {
+    MONITOR_SERIAL.println(F("Error de conexion"));
   }
 }
  
-void loop()
-{
+void loop() {
   radar.read();
-  if (radar.isConnected() && millis() - lastReading > 1000) // Report every 1000ms
-  {
-    lastReading = millis();
-    if (radar.presenceDetected())
-    {
-      if (radar.stationaryTargetDetected())
-      {
-        Serial.print(F("Stationary target: "));
-        Serial.print(radar.stationaryTargetDistance());
-        Serial.print(F("cm energy:"));
-        Serial.print(radar.stationaryTargetEnergy());
-        Serial.print(' ');
+  
+  // Reportar cada 1000ms si esta conectado
+  if (radar.isConnected() && millis() - ultimaLectura > 1000) {
+    ultimaLectura = millis();
+    
+    if (radar.presenceDetected()) {
+      if (radar.stationaryTargetDetected()) {
+        MONITOR_SERIAL.print(F("Objetivo estatico: "));
+        MONITOR_SERIAL.print(radar.stationaryTargetDistance());
+        MONITOR_SERIAL.print(F("cm energia: "));
+        MONITOR_SERIAL.print(radar.stationaryTargetEnergy());
+        MONITOR_SERIAL.print(F(" | "));
       }
-      if (radar.movingTargetDetected())
-      {
-        Serial.print(F("Moving target: "));
-        Serial.print(radar.movingTargetDistance());
-        Serial.print(F("cm energy:"));
-        Serial.print(radar.movingTargetEnergy());
+      
+      if (radar.movingTargetDetected()) {
+        MONITOR_SERIAL.print(F("Objetivo en movimiento: "));
+        MONITOR_SERIAL.print(radar.movingTargetDistance());
+        MONITOR_SERIAL.print(F("cm energia: "));
+        MONITOR_SERIAL.print(radar.movingTargetEnergy());
       }
-      Serial.println();
-    }
-    else
-    {
-      Serial.println(F("No target"));
+      MONITOR_SERIAL.println();
+    } else {
+      MONITOR_SERIAL.println(F("Sin presencia"));
     }
   }
 }
